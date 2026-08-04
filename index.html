@@ -124,7 +124,7 @@ let wangMengExpanded = true;
 
 const SUB_GROUPS = {
   '王孟': [
-    { id: '刘静组', label: '刘静组', group: '刘静', operators: ['鲁伊雯','杨玉洁','陈佳','刘秋芬','项任娸','孟杨','薛岭','章晓东'] },
+    { id: '刘静组', label: '刘静组', group: '刘静', operators: ['鲁伊雯','杨玉洁','陈佳','刘秋芬','项任娸','孟杨','薛岭','章晓东','董崇阳'] },
     { id: '上海综合行业组', label: '上海综合行业组', group: '王孟', operators: ['董崇阳','李露露','陈瑶瑶'] },
     { id: '上海支付宝组', label: '上海支付宝组', group: '王孟', operators: ['刘云杰'] }
   ]
@@ -228,10 +228,12 @@ function applyMonth() {
 function applyFilters() {
   var _raw = RAW_DATA;
   if (window._subOps && currentGroup === '王孟') {
+    var _sg = SUB_GROUPS['王孟'].find(function(s){ return s.id === currentSubGroup; });
+    var _grp = _sg ? _sg.group : '王孟';
     _raw = _raw.filter(function(r){
       return r.账户操作人 !== '/' 
         && window._subOps.includes(r.账户操作人)
-        && (r.盟效运营组 === '王孟' || r.盟效运营组 === '刘静');
+        && r.盟效运营组 === _grp;
     });
     var _mf = document.getElementById('filterMonth').value;
     if (_mf) _raw = _raw.filter(function(r){return r.日期.startsWith(_mf);});
