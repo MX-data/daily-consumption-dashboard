@@ -350,10 +350,10 @@ function renderStats(data) {
       actual = personCount > 0 && days > 0 ? (groupTotal / personCount / days / 10000) : 0;
     }
     const subGroupTargets = {'刘静组':5};
-  const target = currentSubGroup && subGroupTargets[currentSubGroup] ? subGroupTargets[currentSubGroup] : leaderTargets[currentGroup];
+  const target = currentSubGroup && subGroupTargets[currentSubGroup] ? subGroupTargets[currentSubGroup] : (currentGroup === '钱世豪' && (_mf1 === '2026-06' || _mf1 === '2026-07') ? (7*7 + 3.5*2)/9 : (currentGroup === '张远祥' && _mf1 === '2026-07' ? (2.5 + 5*7)/8 : leaderTargets[currentGroup]));
   const groupLabel = currentSubGroup || (currentGroup + '组');
     const rate = target > 0 ? (actual / target * 100) : 0;
-    leaderCards = '<div style="flex:1;background:var(--card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border);text-align:center;"><div style="font-size:12px;color:var(--text2);margin-bottom:2px;">目标消耗</div><div style="font-size:22px;font-weight:700;">' + target + '万</div><div style="font-size:11px;color:var(--text2);">万/人/天</div></div>'
+    leaderCards = '<div style="flex:1;background:var(--card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border);text-align:center;"><div style="font-size:12px;color:var(--text2);margin-bottom:2px;">目标消耗</div><div style="font-size:22px;font-weight:700;">' + Math.round(target * 100) / 100 + '万</div><div style="font-size:11px;color:var(--text2);">万/人/天</div></div>'
       + '<div style="flex:1;background:var(--card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border);text-align:center;"><div style="font-size:12px;color:var(--text2);margin-bottom:2px;">实际消耗</div><div style="font-size:22px;font-weight:700;">' + actual.toFixed(1) + '万</div><div style="font-size:11px;color:var(--text2);">万/人/天</div></div>'
       + '<div style="flex:1;background:var(--card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border);text-align:center;"><div style="font-size:12px;color:var(--text2);margin-bottom:2px;">达成率</div><div style="font-size:22px;font-weight:700;color:' + (rate >= 100 ? '#52c41a' : rate >= 50 ? '#faad14' : '#ff4d4f') + ';">' + Math.round(rate) + '%</div><div style="font-size:11px;color:var(--text2);">' + currentGroup + '组</div></div>'
       + '<div style="flex:1;background:var(--card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border);text-align:center;"><div style="font-size:12px;color:var(--text2);margin-bottom:2px;">时间进度</div><div style="font-size:22px;font-weight:700;color:#1677ff;">' + timePct + '%</div><div style="font-size:11px;color:var(--text2);">' + fMonth + '月' + fDay + '日-' + _endMonth + '月' + lDay + '日</div></div>';
@@ -566,6 +566,7 @@ function renderClientAnomalies(data) {
 function renderTargets(data) {
   const defaultTargets = {"余锐":1500000,"张远祥":1500000,"夏玲欢":2100000,"邱芬":2100000,"魏达昌":2100000,"张琪":2100000,"李沙":2100000,"陈安琦":2100000,"任洁":2100000,"敖丽":1050000,"王曼":1050000,"刘云杰":4500000,"董崇阳":1800000,"章晓东":1800000,"李露露":1800000,"陈瑶瑶":900000,"鲁伊雯":1500000,"孟杨":1500000,"项任娸":1500000,"刘秋芬":1500000,"杨玉洁":750000,"陈佳":750000,"薛岭":750000,"刘静":1500000};
 const julyTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 750000, "夏玲欢": 2100000, "邱芬": 2100000, "魏达昌": 2100000, "张琪": 2100000, "李沙": 2100000, "陈安琦": 2100000, "任洁": 2100000, "敖丽": 1050000, "王曼": 1050000, "刘云杰": 4500000, "董崇阳": 1800000, "陈瑶瑶": 1800000, "鲁伊雯": 1500000, "孟杨": 1500000, "项任娸": 1500000, "刘秋芬": 1500000, "杨玉洁": 1500000, "陈佳": 1500000, "薛岭": 750000};
+const augustTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 1500000, "夏玲欢": 2100000, "邱芬": 2100000, "魏达昌": 2100000, "张琪": 2100000, "李沙": 2100000, "陈安琦": 2100000, "任洁": 2100000, "敖丽": 2100000, "王曼": 2100000, "刘云杰": 4500000, "董崇阳": 1800000, "陈瑶瑶": 1800000, "鲁伊雯": 1500000, "孟杨": 1500000, "项任娸": 1500000, "刘秋芬": 1500000, "杨玉洁": 1500000, "陈佳": 1500000, "薛岭": 750000};
 
   const sectionTitle = document.querySelector('#targetSection h3');
   let groupOps;
@@ -603,7 +604,10 @@ const julyTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 75000
       const _sum = {};
       Object.keys(defaultTargets).forEach(function(k) { _sum[k] = (_sum[k] || 0) + defaultTargets[k]; });
       Object.keys(julyTargets).forEach(function(k) { _sum[k] = (_sum[k] || 0) + julyTargets[k]; });
+      Object.keys(augustTargets).forEach(function(k) { _sum[k] = (_sum[k] || 0) + augustTargets[k]; });
       tgt = _sum;
+    } else if (mf_val >= "2026-08") {
+      tgt = augustTargets;
     } else {
       tgt = defaultTargets;
     }
