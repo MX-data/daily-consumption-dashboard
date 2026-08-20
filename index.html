@@ -293,7 +293,7 @@ function renderStats(data) {
     qOps.delete('钱世豪');
     operators = zOps.size + wOps.size + 9;
   } else {
-    if (currentSubGroup && currentGroup === '王孟') { operators = currentSubGroup === '刘静组' ? (document.getElementById('filterMonth').value === '2026-07' ? 7 : 8) : opsSet.size; } else if (currentGroup === '钱世豪') { operators = 9; } else if (currentGroup === '张远祥') { var _mf_op = document.getElementById('filterMonth').value; operators = _mf_op === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { var _mf_op2 = document.getElementById('filterMonth').value; operators = _mf_op2 === '2026-06' ? 13 : _mf_op2 === '2026-07' ? 10 : 11; } else { operators = opsSet.size; }
+    if (currentSubGroup && currentGroup === '王孟') { operators = currentSubGroup === '刘静组' ? (document.getElementById('filterMonth').value === '2026-07' ? 7 : document.getElementById('filterMonth').value === '2026-08' ? 6 : 8) : opsSet.size; } else if (currentGroup === '钱世豪') { operators = 9; } else if (currentGroup === '张远祥') { var _mf_op = document.getElementById('filterMonth').value; operators = _mf_op === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { var _mf_op2 = document.getElementById('filterMonth').value; operators = _mf_op2 === '2026-06' ? 13 : _mf_op2 === '2026-07' ? 10 : _mf_op2 === '2026-08' ? 9 : 11; } else { operators = opsSet.size; }
   }
   const media = new Set(data.map(r => r.媒体)).size;
   const clients = new Set(data.map(r => r.客户)).size;
@@ -330,7 +330,7 @@ function renderStats(data) {
     if (currentGroup === '钱世豪') { personSet2.delete('钱世豪'); personSet2.delete('刘艳'); personSet2.delete('彭静'); }
     let personCount = personSet2.size;
     const mf_act = document.getElementById('filterMonth').value;
-    if (currentSubGroup && currentGroup === '王孟') { personCount = currentSubGroup === '刘静组' ? (mf_act === '2026-07' ? 7 : 8) : personSet2.size; } else if (currentGroup === '钱世豪') { personCount = 9; } else if (currentGroup === '张远祥') { personCount = mf_act === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { personCount = mf_act === '2026-06' ? 13 : mf_act === '2026-07' ? 10 : 11; }
+    if (currentSubGroup && currentGroup === '王孟') { personCount = currentSubGroup === '刘静组' ? (mf_act === '2026-07' ? 7 : mf_act === '2026-08' ? 6 : 8) : personSet2.size; } else if (currentGroup === '钱世豪') { personCount = 9; } else if (currentGroup === '张远祥') { personCount = mf_act === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { personCount = mf_act === '2026-06' ? 13 : mf_act === '2026-07' ? 10 : mf_act === '2026-08' ? 9 : 11; }
     let actual;
     if (!mf_act) {
       const _mG = {};
@@ -340,7 +340,7 @@ function renderStats(data) {
         var _md = _mG[_m];
         var _mc = sum(_md.map(function(r){return r.消耗;}));
         var _mo = new Set(_md.map(function(r){return r.账户操作人;})).size;
-        if (currentSubGroup && currentGroup === '王孟') { if (currentSubGroup === '刘静组') _mo = _m === '2026-07' ? 7 : 8; } else if (currentGroup === '钱世豪') { _mo = 9; } else if (currentGroup === '张远祥') { _mo = _m === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { _mo = _m === '2026-06' ? 13 : _m === '2026-07' ? 10 : 11; }
+        if (currentSubGroup && currentGroup === '王孟') { if (currentSubGroup === '刘静组') _mo = _m === '2026-07' ? 7 : _m === '2026-08' ? 6 : 8; } else if (currentGroup === '钱世豪') { _mo = 9; } else if (currentGroup === '张远祥') { _mo = _m === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { _mo = _m === '2026-06' ? 13 : _m === '2026-07' ? 10 : _m === '2026-08' ? 9 : 11; }
         var _fd = _md[0].日期; var _mDates = [...new Set(_md.map(function(r){return r.日期;}))].length; var _mds = _mDates > 0 ? _mDates : new Date(new Date(_fd).getFullYear(), new Date(_fd).getMonth() + 1, 0).getDate();
         _sA += _mo > 0 && _mds > 0 ? (_mc / _mo / _mds / 10000) : 0;
       });
