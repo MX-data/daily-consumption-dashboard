@@ -293,7 +293,7 @@ function renderStats(data) {
     qOps.delete('钱世豪');
     operators = zOps.size + wOps.size + 9;
   } else {
-    if (currentSubGroup && currentGroup === '王孟') { operators = currentSubGroup === '刘静组' ? (document.getElementById('filterMonth').value === '2026-07' ? 7 : document.getElementById('filterMonth').value === '2026-08' ? 6 : 8) : opsSet.size; } else if (currentGroup === '钱世豪') { operators = 9; } else if (currentGroup === '张远祥') { var _mf_op = document.getElementById('filterMonth').value; operators = _mf_op === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { var _mf_op2 = document.getElementById('filterMonth').value; operators = _mf_op2 === '2026-06' ? 13 : _mf_op2 === '2026-07' ? 10 : _mf_op2 === '2026-08' ? 9 : 11; } else { operators = opsSet.size; }
+    if (currentSubGroup && currentGroup === '王孟') { operators = currentSubGroup === '刘静组' ? (document.getElementById('filterMonth').value === '2026-07' ? 7 : document.getElementById('filterMonth').value === '2026-08' ? 6 : 8) : opsSet.size; } else if (currentGroup === '钱世豪') { operators = document.getElementById('filterMonth').value === '2026-09' ? 8 : 9; } else if (currentGroup === '张远祥') { var _mf_op = document.getElementById('filterMonth').value; operators = _mf_op === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { var _mf_op2 = document.getElementById('filterMonth').value; operators = _mf_op2 === '2026-06' ? 13 : _mf_op2 === '2026-07' ? 10 : _mf_op2 === '2026-08' ? 9 : 11; } else { operators = opsSet.size; }
   }
   const media = new Set(data.map(r => r.媒体)).size;
   const clients = new Set(data.map(r => r.客户)).size;
