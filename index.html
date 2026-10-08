@@ -36,6 +36,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Rob
 .nav-item.expandable::after { content:"▸"; margin-left:auto; font-size:10px; opacity:0.5; transition:transform .25s cubic-bezier(0.4,0,0.2,1); }
 .nav-item.expandable.expanded::after { transform:rotate(90deg); opacity:0.8; }
 .sub-nav-item { padding:6px 16px 6px 34px; cursor:pointer; font-size:12px; font-weight:500; color:rgba(255,255,255,0.45); transition:all .2s; margin:0 10px; border-radius:6px; display:flex; align-items:center; gap:8px; }
+.sub-sub-nav-item { padding:5px 16px 5px 52px; cursor:pointer; font-size:11px; font-weight:500; color:rgba(255,255,255,0.35); transition:all .2s; margin:0 10px; border-radius:6px; display:flex; align-items:center; gap:8px; }
+.sub-sub-nav-item:hover { color:rgba(255,255,255,0.7); background:rgba(255,255,255,0.06); }
+.sub-sub-nav-item.active { color:#fff; background:rgba(22,119,255,0.18); }
 .sub-nav-item::before { content:""; width:3px; height:3px; border-radius:50%; background:rgba(255,255,255,0.3); flex-shrink:0; }
 .sub-nav-item:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.7); }
 .sub-nav-item.active { background:rgba(79,110,247,0.15); color:var(--primary); font-weight:600; }
@@ -121,14 +124,33 @@ function groupBy(arr, key) {
 }
 let currentSubGroup = '';
 let wangMengExpanded = true;
+let liujingExpanded = false;
 
 const SUB_GROUPS = {
   '王孟': [
-    { id: '刘静组', label: '刘静组', group: '刘静', operators: ['鲁伊雯','杨玉洁','陈佳','刘秋芬','项任娸','孟杨','薛岭','章晓东','董崇阳'] },
+    { id: '刘静组', label: '刘静组', group: '刘静', operators: ['鲁伊雯','杨玉洁','陈佳','刘秋芬','项任娸','孟杨','薛岭','章晓东','董崇阳','骆朝杨','余念情','洪芷晴'], subGroups: [
+    { id: '母婴专项组', label: '母婴专项组', group: '刘静', operators: ['骆朝杨','余念情'] },
+    { id: '常规消费品组', label: '常规消费品组', group: '刘静', operators: ['鲁伊雯','杨玉洁','陈佳','刘秋芬','项任娸','孟杨','薛岭','章晓东','董崇阳','洪芷晴'] }
+  ] },
     { id: '上海综合行业组', label: '上海综合行业组', group: '王孟', operators: ['董崇阳','李露露','陈瑶瑶'] },
     { id: '上海支付宝组', label: '上海支付宝组', group: '王孟', operators: ['刘云杰'] }
   ]
 };
+
+function findSubGroup(id) {
+  var g, i, j;
+  for (g in SUB_GROUPS) {
+    var subs = SUB_GROUPS[g] || [];
+    for (i = 0; i < subs.length; i++) {
+      if (subs[i].id === id) return subs[i];
+      var subsubs = subs[i].subGroups || [];
+      for (j = 0; j < subsubs.length; j++) {
+        if (subsubs[j].id === id) return subsubs[j];
+      }
+    }
+  }
+  return null;
+}
 
 let charts = {};
 let currentGroup = '王孟';
@@ -147,7 +169,7 @@ function getGroupData(group) {
   const mf = document.getElementById("filterMonth").value;
   if (mf) data = data.filter(r => r.日期.startsWith(mf));
   if (currentSubGroup && group === '王孟') {
-    const sg = SUB_GROUPS[group].find(s => s.id === currentSubGroup);
+    const sg = findSubGroup(currentSubGroup);
     if (sg) data = data.filter(r => sg.operators.includes(r.账户操作人));
   }
   return data;
@@ -166,6 +188,7 @@ function switchGroup(group) {
   }
   currentGroup = group;
   currentSubGroup = '';
+  liujingExpanded = false;
   window._subOps = null;
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.group === group));
   document.querySelectorAll('.sub-nav-item').forEach(el => el.classList.remove('active'));
@@ -188,7 +211,7 @@ function updateFilters() {
   let ops = [...new Set(data.map(r => r.账户操作人))].sort();
   const meds = [...new Set(data.map(r => r.媒体))].sort();
   if (currentSubGroup && currentGroup === '王孟') {
-    const sg = SUB_GROUPS[currentGroup].find(s => s.id === currentSubGroup);
+    const sg = findSubGroup(currentSubGroup);
     if (sg) ops = ops.filter(o => sg.operators.includes(o));
   }
   const selOp = document.getElementById('filterOperator');
@@ -572,7 +595,7 @@ const augustTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 150
   const sectionTitle = document.querySelector('#targetSection h3');
   let groupOps;
   if (currentSubGroup && currentGroup === '王孟') {
-    const sg = SUB_GROUPS[currentGroup].find(s => s.id === currentSubGroup);
+    const sg = findSubGroup(currentSubGroup);
     groupOps = sg ? sg.operators.filter(op => op !== '刘静') : [];
     sectionTitle.textContent = currentSubGroup + ' · 目标及达成情况';
   } else {
@@ -640,7 +663,14 @@ function buildSidebar() {
       const subs = SUB_GROUPS[g] || [];
       const subItems = subs.map(sg => {
         const subActive = currentSubGroup === sg.id ? ' active' : '';
-        return '<div class="sub-nav-item' + subActive + '" data-sub="' + sg.id + '" onclick="switchSubGroup(\'' + sg.id + '\')">' + sg.label + '</div>';
+        let subInner = '';
+        if (sg.subGroups && sg.subGroups.length && liujingExpanded) {
+          subInner = sg.subGroups.map(ssg => {
+            const ssActive = currentSubGroup === ssg.id ? ' active' : '';
+            return '<div class="sub-sub-nav-item' + ssActive + '" onclick="switchSubSubGroup(\'' + ssg.id + '\')">' + ssg.label + '</div>';
+          }).join('');
+        }
+        return '<div class="sub-nav-item' + subActive + '" data-sub="' + sg.id + '" onclick="switchSubGroup(\'' + sg.id + '\')">' + sg.label + '</div>' + subInner;
       }).join('');
       return '<div class="nav-item expandable' + active + expanded + '" onclick="switchGroup(\'' + g + '\')"><span class="nav-dot"></span>' + g + '组</div>' + (expanded ? subItems : '');
     }
@@ -664,12 +694,31 @@ function switchSubGroup(subId) {
   currentGroup = '王孟';
   currentSubGroup = subId;
   wangMengExpanded = true;
+  if (subId === '刘静组') {
+    liujingExpanded = true;
+  } else {
+    liujingExpanded = false;
+  }
   buildSidebar();
   populateMonthFilter();
-  const sg = SUB_GROUPS['王孟'].find(s => s.id === subId);
+  const sg = findSubGroup(subId);
   if (!sg) return;
   window._subOps = sg.operators;
   document.getElementById('groupTitle').textContent = '王孟组 · ' + sg.label;
+  _renderSubGroup(sg.operators, sg.group);
+}
+
+function switchSubSubGroup(ssgId) {
+  currentGroup = '王孟';
+  currentSubGroup = ssgId;
+  liujingExpanded = true;
+  wangMengExpanded = true;
+  buildSidebar();
+  populateMonthFilter();
+  var sg = findSubGroup(ssgId);
+  if (!sg) return;
+  window._subOps = sg.operators;
+  document.getElementById('groupTitle').textContent = '王孟组 · 刘静组 · ' + sg.label;
   _renderSubGroup(sg.operators, sg.group);
 }
 
