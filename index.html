@@ -132,7 +132,7 @@ const SUB_GROUPS = {
     { id: '母婴专项组', label: '母婴专项组', group: '刘静', operators: ['骆朝杨','余念情'] },
     { id: '常规消费品组', label: '常规消费品组', group: '刘静', operators: ['鲁伊雯','杨玉洁','陈佳','刘秋芬','项任娸','孟杨','薛岭','章晓东','董崇阳','洪芷晴'] }
   ] },
-    { id: '上海综合行业组', label: '上海综合行业组', group: '王孟', operators: ['董崇阳','李露露','陈瑶瑶'] },
+    { id: '上海综合行业组', label: '上海综合行业组', group: '王孟', operators: ['董崇阳','李露露','陈瑶瑶','高嘉雯'] },
     { id: '上海支付宝组', label: '上海支付宝组', group: '王孟', operators: ['刘云杰'] }
   ]
 };
@@ -251,7 +251,7 @@ function applyMonth() {
 function applyFilters() {
   var _raw = RAW_DATA;
   if (window._subOps && currentGroup === '王孟') {
-    var _sg = SUB_GROUPS['王孟'].find(function(s){ return s.id === currentSubGroup; });
+    var _sg = findSubGroup(currentSubGroup);
     var _grp = _sg ? _sg.group : '王孟';
     _raw = _raw.filter(function(r){
       return r.账户操作人 !== '/' 
@@ -372,7 +372,7 @@ function renderStats(data) {
     } else {
       actual = personCount > 0 && days > 0 ? (groupTotal / personCount / days / 10000) : 0;
     }
-    const subGroupTargets = {'刘静组':5};
+    const subGroupTargets = {'刘静组':5, '母婴专项组':5};
   const target = currentSubGroup && subGroupTargets[currentSubGroup] ? subGroupTargets[currentSubGroup] : (currentGroup === '钱世豪' && (_mf1 === '2026-06' || _mf1 === '2026-07') ? (7*7 + 3.5*2)/9 : (currentGroup === '张远祥' && _mf1 === '2026-07' ? (2.5 + 5*7)/8 : leaderTargets[currentGroup]));
   const groupLabel = currentSubGroup || (currentGroup + '组');
     const rate = target > 0 ? (actual / target * 100) : 0;
@@ -590,7 +590,7 @@ function renderClientAnomalies(data) {
 function renderTargets(data) {
   const defaultTargets = {"余锐":1500000,"张远祥":1500000,"夏玲欢":2100000,"邱芬":2100000,"魏达昌":2100000,"张琪":2100000,"李沙":2100000,"陈安琦":2100000,"任洁":2100000,"敖丽":1050000,"王曼":1050000,"刘云杰":4500000,"董崇阳":1800000,"章晓东":1800000,"李露露":1800000,"陈瑶瑶":900000,"鲁伊雯":1500000,"孟杨":1500000,"项任娸":1500000,"刘秋芬":1500000,"杨玉洁":750000,"陈佳":750000,"薛岭":750000,"刘静":1500000};
 const julyTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 750000, "夏玲欢": 2100000, "邱芬": 2100000, "魏达昌": 2100000, "张琪": 2100000, "李沙": 2100000, "陈安琦": 2100000, "任洁": 2100000, "敖丽": 1050000, "王曼": 1050000, "刘云杰": 4500000, "董崇阳": 1800000, "陈瑶瑶": 1800000, "鲁伊雯": 1500000, "孟杨": 1500000, "项任娸": 1500000, "刘秋芬": 1500000, "杨玉洁": 1500000, "陈佳": 1500000, "薛岭": 750000};
-const augustTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 1500000, "夏玲欢": 2100000, "邱芬": 2100000, "魏达昌": 2100000, "张琪": 2100000, "李沙": 2100000, "陈安琦": 2100000, "任洁": 2100000, "敖丽": 2100000, "王曼": 2100000, "刘云杰": 4500000, "董崇阳": 1800000, "陈瑶瑶": 1800000, "鲁伊雯": 1500000, "孟杨": 1500000, "项任娸": 1500000, "刘秋芬": 1500000, "杨玉洁": 1500000, "陈佳": 1500000, "薛岭": 750000};
+const augustTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 1500000, "夏玲欢": 2100000, "邱芬": 2100000, "魏达昌": 2100000, "张琪": 2100000, "李沙": 2100000, "陈安琦": 2100000, "任洁": 2100000, "敖丽": 2100000, "王曼": 2100000, "刘云杰": 4500000, "董崇阳": 1800000, "陈瑶瑶": 1800000, "鲁伊雯": 1500000, "孟杨": 1500000, "项任娸": 1500000, "刘秋芬": 1500000, "杨玉洁": 1500000, "陈佳": 1500000, "薛岭": 750000, "骆朝杨": 1500000, "余念情": 1500000, "高嘉雯": 1800000};
 
   const sectionTitle = document.querySelector('#targetSection h3');
   let groupOps;
@@ -635,7 +635,11 @@ const augustTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 150
     } else {
       tgt = defaultTargets;
     }
-    const target = tgt[k] || 0;
+    let target = tgt[k] || 0;
+    const octOnlyOps = ['骆朝杨', '余念情', '高嘉雯'];
+    if (octOnlyOps.includes(k) && mf_val && mf_val < '2026-10') {
+      target = 0;
+    }
     const rate = target > 0 ? (total / target * 100) : 0;
     return { name:k, total, target, rate };
   });
