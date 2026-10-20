@@ -49,6 +49,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Rob
 .header-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .header-controls select { padding:6px 12px 6px 10px; border:1px solid var(--border); border-radius:8px; font-size:12px; font-weight:500; background:var(--card); cursor:pointer; min-width:110px; color:var(--text); appearance:none; background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
 .header-controls select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,110,247,0.12); }
+.header-controls .date-sep { font-size:12px; color:var(--text2); margin:0 2px; }
 .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
 .stat-card { background:var(--card); border-radius:var(--radius); padding:20px 24px; box-shadow:var(--shadow); border:1px solid var(--border); transition:box-shadow .2s, transform .2s; }
 .stat-card:hover { box-shadow:var(--shadow-lg); }
@@ -91,6 +92,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Rob
       <h1 id="groupTitle">王孟组 · 运营看板</h1>
       <div class="header-controls">
         <select id="filterMonth" onchange="applyMonth()"><option value="">全部月份</option></select>
+        <select id="filterStartDate" onchange="applyFilters()"><option value="">开始日期</option></select>
+        <span class="date-sep">至</span>
+        <select id="filterEndDate" onchange="applyFilters()"><option value="">结束日期</option></select>
         <select id="filterOperator" onchange="applyFilters()"><option value="">全部运营人员</option></select>
         <select id="filterMedia" onchange="applyFilters()"><option value="">全部媒体</option></select>
       </div>
@@ -124,6 +128,7 @@ function groupBy(arr, key) {
 }
 let currentSubGroup = '';
 let wangMengExpanded = true;
+let qianshihaoExpanded = true;
 let liujingExpanded = false;
 
 const SUB_GROUPS = {
@@ -134,6 +139,10 @@ const SUB_GROUPS = {
   ] },
     { id: '上海综合行业组', label: '上海综合行业组', group: '王孟', operators: ['董崇阳','李露露','陈瑶瑶','高嘉雯'] },
     { id: '上海支付宝组', label: '上海支付宝组', group: '王孟', operators: ['刘云杰'] }
+  ],
+  '钱世豪': [
+    { id: '夏玲欢组', label: '夏玲欢组', group: '钱世豪', operators: ['夏玲欢','李沙','邱芬','敖丽'] },
+    { id: '大客一组', label: '大客一组', group: '钱世豪', operators: ['彭静','王曼','张琪','任洁','刘艳','魏达昌','陈安琦'] }
   ]
 };
 
@@ -146,6 +155,21 @@ function findSubGroup(id) {
       var subsubs = subs[i].subGroups || [];
       for (j = 0; j < subsubs.length; j++) {
         if (subsubs[j].id === id) return subsubs[j];
+      }
+    }
+  }
+  return null;
+}
+
+function findSubGroupParent(id) {
+  var g, i, j;
+  for (g in SUB_GROUPS) {
+    var subs = SUB_GROUPS[g] || [];
+    for (i = 0; i < subs.length; i++) {
+      if (subs[i].id === id) return g;
+      var subsubs = subs[i].subGroups || [];
+      for (j = 0; j < subsubs.length; j++) {
+        if (subsubs[j].id === id) return g;
       }
     }
   }
@@ -168,7 +192,7 @@ function getGroupData(group) {
   if (md) data = data.filter(r => r.媒体 === md);
   const mf = document.getElementById("filterMonth").value;
   if (mf) data = data.filter(r => r.日期.startsWith(mf));
-  if (currentSubGroup && group === '王孟') {
+  if (currentSubGroup) {
     const sg = findSubGroup(currentSubGroup);
     if (sg) data = data.filter(r => sg.operators.includes(r.账户操作人));
   }
@@ -185,6 +209,15 @@ function switchGroup(group) {
       return;
     }
     wangMengExpanded = true;
+  }
+  if (group === '钱世豪') {
+    if (currentGroup === '钱世豪' && !currentSubGroup) {
+      qianshihaoExpanded = !qianshihaoExpanded;
+      buildSidebar();
+      populateMonthFilter();
+      return;
+    }
+    qianshihaoExpanded = true;
   }
   currentGroup = group;
   currentSubGroup = '';
@@ -210,9 +243,13 @@ function updateFilters() {
   }
   let ops = [...new Set(data.map(r => r.账户操作人))].sort();
   const meds = [...new Set(data.map(r => r.媒体))].sort();
-  if (currentSubGroup && currentGroup === '王孟') {
+  if (currentSubGroup) {
     const sg = findSubGroup(currentSubGroup);
     if (sg) ops = ops.filter(o => sg.operators.includes(o));
+  }
+  const mfUpd = document.getElementById('filterMonth').value;
+  if (mfUpd === '2026-10' && (currentGroup === '钱世豪' || currentGroup === '汇总')) {
+    ops = ops.filter(o => o !== '彭静' && o !== '任洁');
   }
   const selOp = document.getElementById('filterOperator');
   const selMd = document.getElementById('filterMedia');
@@ -237,6 +274,19 @@ function applyMonth() {
   applyFilters();
 }
 
+function populateDateFilters() {
+  const dates = [...new Set(RAW_DATA.map(r => r.日期))].sort().reverse();
+  const selS = document.getElementById('filterStartDate');
+  const selE = document.getElementById('filterEndDate');
+  const curS = selS.value;
+  const curE = selE.value;
+  const options = '<option value="">全部日期</option>' + dates.map(d => '<option value="' + d + '">' + d + '</option>').join('');
+  selS.innerHTML = options;
+  selE.innerHTML = options;
+  selS.value = curS;
+  selE.value = curE;
+}
+
 function populateMonthFilter() {
   const months = [...new Set(RAW_DATA.map(r => r.日期.slice(0, 7)))].sort();
   const sel = document.getElementById('filterMonth');
@@ -250,9 +300,9 @@ function applyMonth() {
 }
 function applyFilters() {
   var _raw = RAW_DATA;
-  if (window._subOps && currentGroup === '王孟') {
+  if (window._subOps) {
     var _sg = findSubGroup(currentSubGroup);
-    var _grp = _sg ? _sg.group : '王孟';
+    var _grp = _sg ? _sg.group : currentGroup;
     _raw = _raw.filter(function(r){
       return r.账户操作人 !== '/' 
         && window._subOps.includes(r.账户操作人)
@@ -269,6 +319,18 @@ function applyFilters() {
   var _md = document.getElementById('filterMedia').value;
   if (_op) _raw = _raw.filter(function(r){return r.账户操作人 === _op;});
   if (_md) _raw = _raw.filter(function(r){return r.媒体 === _md;});
+  var _sd = document.getElementById('filterStartDate').value;
+  var _ed = document.getElementById('filterEndDate').value;
+  if (_sd || _ed) {
+    _raw = _raw.filter(function(r){
+      return (!_sd || r.日期 >= _sd) && (!_ed || r.日期 <= _ed);
+    });
+  }
+  if (_mf === '2026-10') {
+    _raw = _raw.filter(function(r){
+      return !(r.盟效运营组 === '钱世豪' && (r.账户操作人 === '彭静' || r.账户操作人 === '任洁'));
+    });
+  }
   adjustLayoutForFilter(_raw, _op);
   renderStats(_raw);
   renderMediaTable(_raw);
@@ -316,7 +378,7 @@ function renderStats(data) {
     qOps.delete('钱世豪');
     operators = zOps.size + wOps.size + 9;
   } else {
-    if (currentSubGroup && currentGroup === '王孟') { operators = currentSubGroup === '刘静组' ? (document.getElementById('filterMonth').value === '2026-07' ? 7 : document.getElementById('filterMonth').value === '2026-08' ? 6 : 8) : opsSet.size; } else if (currentGroup === '钱世豪') { operators = document.getElementById('filterMonth').value === '2026-09' ? 8 : 9; } else if (currentGroup === '张远祥') { var _mf_op = document.getElementById('filterMonth').value; operators = _mf_op === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { var _mf_op2 = document.getElementById('filterMonth').value; operators = _mf_op2 === '2026-06' ? 13 : _mf_op2 === '2026-07' ? 10 : _mf_op2 === '2026-08' ? 9 : 11; } else { operators = opsSet.size; }
+    if (currentSubGroup && currentGroup === '王孟') { operators = currentSubGroup === '刘静组' ? (document.getElementById('filterMonth').value === '2026-07' ? 7 : document.getElementById('filterMonth').value === '2026-08' ? 6 : 8) : opsSet.size; } else if (currentGroup === '钱世豪' && !currentSubGroup) { operators = document.getElementById('filterMonth').value === '2026-09' ? 8 : 9; } else if (currentGroup === '张远祥') { var _mf_op = document.getElementById('filterMonth').value; operators = _mf_op === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { var _mf_op2 = document.getElementById('filterMonth').value; operators = _mf_op2 === '2026-06' ? 13 : _mf_op2 === '2026-07' ? 10 : _mf_op2 === '2026-08' ? 9 : 11; } else { operators = opsSet.size; }
   }
   const media = new Set(data.map(r => r.媒体)).size;
   const clients = new Set(data.map(r => r.客户)).size;
@@ -350,10 +412,16 @@ function renderStats(data) {
         subs.forEach(sg => sg.operators.forEach(op => personSet2.add(op)));
       }
     }
-    if (currentGroup === '钱世豪') { personSet2.delete('钱世豪'); personSet2.delete('刘艳'); personSet2.delete('彭静'); }
+    if (currentGroup === '钱世豪') {
+      personSet2.delete('钱世豪');
+      if (!currentSubGroup) {
+        personSet2.delete('刘艳');
+        personSet2.delete('彭静');
+      }
+    }
     let personCount = personSet2.size;
     const mf_act = document.getElementById('filterMonth').value;
-    if (currentSubGroup && currentGroup === '王孟') { personCount = currentSubGroup === '刘静组' ? (mf_act === '2026-07' ? 7 : mf_act === '2026-08' ? 6 : 8) : personSet2.size; } else if (currentGroup === '钱世豪') { personCount = mf_act === '2026-09' ? 8 : 9; } else if (currentGroup === '张远祥') { personCount = mf_act === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { personCount = mf_act === '2026-06' ? 13 : mf_act === '2026-07' ? 10 : mf_act === '2026-08' ? 9 : 11; }
+    if (currentSubGroup && currentGroup === '王孟') { personCount = currentSubGroup === '刘静组' ? (mf_act === '2026-07' ? 7 : mf_act === '2026-08' ? 6 : 8) : personSet2.size; } else if (currentGroup === '钱世豪' && !currentSubGroup) { personCount = mf_act === '2026-09' ? 8 : 9; } else if (currentGroup === '张远祥') { personCount = mf_act === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { personCount = mf_act === '2026-06' ? 13 : mf_act === '2026-07' ? 10 : mf_act === '2026-08' ? 9 : 11; }
     let actual;
     if (!mf_act) {
       const _mG = {};
@@ -363,7 +431,7 @@ function renderStats(data) {
         var _md = _mG[_m];
         var _mc = sum(_md.map(function(r){return r.消耗;}));
         var _mo = new Set(_md.map(function(r){return r.账户操作人;})).size;
-        if (currentSubGroup && currentGroup === '王孟') { if (currentSubGroup === '刘静组') _mo = _m === '2026-07' ? 7 : _m === '2026-08' ? 6 : 8; } else if (currentGroup === '钱世豪') { _mo = _m === '2026-09' ? 8 : 9; } else if (currentGroup === '张远祥') { _mo = _m === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { _mo = _m === '2026-06' ? 13 : _m === '2026-07' ? 10 : _m === '2026-08' ? 9 : 11; }
+        if (currentSubGroup && currentGroup === '王孟') { if (currentSubGroup === '刘静组') _mo = _m === '2026-07' ? 7 : _m === '2026-08' ? 6 : 8; } else if (currentGroup === '钱世豪' && !currentSubGroup) { _mo = _m === '2026-09' ? 8 : 9; } else if (currentGroup === '张远祥') { _mo = _m === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { _mo = _m === '2026-06' ? 13 : _m === '2026-07' ? 10 : _m === '2026-08' ? 9 : 11; }
         var _fd = _md[0].日期; var _mDates = [...new Set(_md.map(function(r){return r.日期;}))].length; var _mds = _mDates > 0 ? _mDates : new Date(new Date(_fd).getFullYear(), new Date(_fd).getMonth() + 1, 0).getDate();
         _sA += _mo > 0 && _mds > 0 ? (_mc / _mo / _mds / 10000) : 0;
       });
@@ -594,7 +662,7 @@ const augustTargets = {"余锐": 1500000, "张远祥": 1500000, "张金莎": 150
 
   const sectionTitle = document.querySelector('#targetSection h3');
   let groupOps;
-  if (currentSubGroup && currentGroup === '王孟') {
+  if (currentSubGroup) {
     const sg = findSubGroup(currentSubGroup);
     groupOps = sg ? sg.operators.filter(op => op !== '刘静') : [];
     sectionTitle.textContent = currentSubGroup + ' · 目标及达成情况';
@@ -662,8 +730,9 @@ function buildSidebar() {
   const container = document.getElementById('sidebarItems');
   container.innerHTML = '<div class="nav-item' + (currentGroup === '汇总' ? ' active' : '') + '" onclick="switchGroup(\'汇总\')"><span class="nav-dot"></span>汇总</div><div class="nav-section">运营组</div>' + groups.map(g => {
     const active = g === currentGroup && !currentSubGroup ? ' active' : '';
-    if (g === '王孟') {
-      const expanded = wangMengExpanded ? ' expanded' : '';
+    if (SUB_GROUPS[g]) {
+      const expandedFlag = g === '王孟' ? wangMengExpanded : qianshihaoExpanded;
+      const expanded = expandedFlag ? ' expanded' : '';
       const subs = SUB_GROUPS[g] || [];
       const subItems = subs.map(sg => {
         const subActive = currentSubGroup === sg.id ? ' active' : '';
@@ -686,6 +755,7 @@ function initDashboard() {
   buildSidebar();
   populateMonthFilter();
   populateMonthFilter();
+  populateDateFilters();
   if (!currentGroup) {
     currentGroup = '汇总';
   }
@@ -695,20 +765,18 @@ function initDashboard() {
 }
 
 function switchSubGroup(subId) {
-  currentGroup = '王孟';
+  const parent = findSubGroupParent(subId) || '王孟';
+  currentGroup = parent;
   currentSubGroup = subId;
-  wangMengExpanded = true;
-  if (subId === '刘静组') {
-    liujingExpanded = true;
-  } else {
-    liujingExpanded = false;
-  }
+  if (parent === '王孟') wangMengExpanded = true;
+  if (parent === '钱世豪') qianshihaoExpanded = true;
+  liujingExpanded = (subId === '刘静组');
   buildSidebar();
   populateMonthFilter();
   const sg = findSubGroup(subId);
   if (!sg) return;
   window._subOps = sg.operators;
-  document.getElementById('groupTitle').textContent = '王孟组 · ' + sg.label;
+  document.getElementById('groupTitle').textContent = (parent === '王孟' ? '王孟组' : '钱世豪组') + ' · ' + sg.label;
   _renderSubGroup(sg.operators, sg.group);
 }
 
@@ -737,6 +805,14 @@ function _renderSubGroup(ops, subGroup) {
   var md = document.getElementById('filterMedia').value;
   if (op) d = d.filter(function(r){return r.账户操作人 === op;});
   if (md) d = d.filter(function(r){return r.媒体 === md;});
+  var sd = document.getElementById('filterStartDate').value;
+  var ed = document.getElementById('filterEndDate').value;
+  if (sd || ed) {
+    d = d.filter(function(r){return (!sd || r.日期 >= sd) && (!ed || r.日期 <= ed);});
+  }
+  if (mf === '2026-10' && subGroup === '钱世豪') {
+    d = d.filter(function(r){return r.账户操作人 !== '彭静' && r.账户操作人 !== '任洁';});
+  }
   adjustLayoutForFilter(d, op);
   renderStats(d); renderMediaTable(d); renderClientTable(d); renderDailyTrend(d);
   renderTargets(d); renderMediaAnomalies(d); renderOperatorAnomalies(d); renderClientAnomalies(d);
