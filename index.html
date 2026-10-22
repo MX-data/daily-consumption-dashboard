@@ -241,13 +241,17 @@ function updateFilters() {
   } else {
     data = RAW_DATA.filter(r => (r.盟效运营组 === currentGroup || (currentGroup === '王孟' && r.盟效运营组 === '刘静')) && r.账户操作人 !== '/');
   }
+  const mfUpd = document.getElementById('filterMonth').value;
+  const sdUpd = document.getElementById('filterStartDate').value;
+  const edUpd = document.getElementById('filterEndDate').value;
+  if (mfUpd) data = data.filter(r => r.日期.startsWith(mfUpd));
+  if (sdUpd || edUpd) data = data.filter(r => (!sdUpd || r.日期 >= sdUpd) && (!edUpd || r.日期 <= edUpd));
   let ops = [...new Set(data.map(r => r.账户操作人))].sort();
   const meds = [...new Set(data.map(r => r.媒体))].sort();
   if (currentSubGroup) {
     const sg = findSubGroup(currentSubGroup);
     if (sg) ops = ops.filter(o => sg.operators.includes(o));
   }
-  const mfUpd = document.getElementById('filterMonth').value;
   if (mfUpd === '2026-10' && (currentGroup === '钱世豪' || currentGroup === '汇总')) {
     ops = ops.filter(o => o !== '彭静' && o !== '任洁');
   }
@@ -378,7 +382,7 @@ function renderStats(data) {
     qOps.delete('钱世豪');
     operators = zOps.size + wOps.size + (document.getElementById('filterMonth').value === '2026-09' || document.getElementById('filterMonth').value === '2026-10' ? 8 : 9);
   } else {
-    if (currentSubGroup && currentGroup === '王孟') { operators = currentSubGroup === '刘静组' ? (document.getElementById('filterMonth').value === '2026-07' ? 7 : document.getElementById('filterMonth').value === '2026-08' ? 6 : 8) : opsSet.size; } else if (currentGroup === '钱世豪' && !currentSubGroup) { operators = (document.getElementById('filterMonth').value === '2026-09' || document.getElementById('filterMonth').value === '2026-10') ? 8 : 9; } else if (currentGroup === '张远祥') { var _mf_op = document.getElementById('filterMonth').value; operators = _mf_op === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { var _mf_op2 = document.getElementById('filterMonth').value; operators = _mf_op2 === '2026-06' ? 13 : _mf_op2 === '2026-07' ? 10 : _mf_op2 === '2026-08' ? 9 : 11; } else { operators = opsSet.size; }
+    if (currentSubGroup === '夏玲欢组' && document.getElementById('filterMonth').value === '2026-10') { operators = 4; } else if (currentSubGroup && currentGroup === '王孟') { operators = currentSubGroup === '刘静组' ? (document.getElementById('filterMonth').value === '2026-07' ? 7 : document.getElementById('filterMonth').value === '2026-08' ? 6 : 8) : opsSet.size; } else if (currentGroup === '钱世豪' && !currentSubGroup) { operators = (document.getElementById('filterMonth').value === '2026-09' || document.getElementById('filterMonth').value === '2026-10') ? 8 : 9; } else if (currentGroup === '张远祥') { var _mf_op = document.getElementById('filterMonth').value; operators = _mf_op === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { var _mf_op2 = document.getElementById('filterMonth').value; operators = _mf_op2 === '2026-06' ? 13 : _mf_op2 === '2026-07' ? 10 : _mf_op2 === '2026-08' ? 9 : 11; } else { operators = opsSet.size; }
   }
   const media = new Set(data.map(r => r.媒体)).size;
   const clients = new Set(data.map(r => r.客户)).size;
@@ -421,7 +425,7 @@ function renderStats(data) {
     }
     let personCount = personSet2.size;
     const mf_act = document.getElementById('filterMonth').value;
-    if (currentSubGroup && currentGroup === '王孟') { personCount = currentSubGroup === '刘静组' ? (mf_act === '2026-07' ? 7 : mf_act === '2026-08' ? 6 : 8) : personSet2.size; } else if (currentGroup === '钱世豪' && !currentSubGroup) { personCount = (mf_act === '2026-09' || mf_act === '2026-10') ? 8 : 9; } else if (currentGroup === '张远祥') { personCount = mf_act === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { personCount = mf_act === '2026-06' ? 13 : mf_act === '2026-07' ? 10 : mf_act === '2026-08' ? 9 : 11; }
+    if (currentSubGroup === '夏玲欢组' && mf_act === '2026-10') { personCount = 4; } else if (currentSubGroup && currentGroup === '王孟') { personCount = currentSubGroup === '刘静组' ? (mf_act === '2026-07' ? 7 : mf_act === '2026-08' ? 6 : 8) : personSet2.size; } else if (currentGroup === '钱世豪' && !currentSubGroup) { personCount = (mf_act === '2026-09' || mf_act === '2026-10') ? 8 : 9; } else if (currentGroup === '张远祥') { personCount = mf_act === '2026-06' ? 2 : 3; } else if (currentGroup === '王孟') { personCount = mf_act === '2026-06' ? 13 : mf_act === '2026-07' ? 10 : mf_act === '2026-08' ? 9 : 11; }
     let actual;
     if (!mf_act) {
       const _mG = {};
