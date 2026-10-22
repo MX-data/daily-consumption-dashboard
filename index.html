@@ -780,6 +780,7 @@ function switchSubGroup(subId) {
   const sg = findSubGroup(subId);
   if (!sg) return;
   window._subOps = sg.operators;
+  updateFilters();
   document.getElementById('groupTitle').textContent = (parent === '王孟' ? '王孟组' : '钱世豪组') + ' · ' + sg.label;
   _renderSubGroup(sg.operators, sg.group);
 }
@@ -794,6 +795,7 @@ function switchSubSubGroup(ssgId) {
   var sg = findSubGroup(ssgId);
   if (!sg) return;
   window._subOps = sg.operators;
+  updateFilters();
   document.getElementById('groupTitle').textContent = '王孟组 · 刘静组 · ' + sg.label;
   _renderSubGroup(sg.operators, sg.group);
 }
