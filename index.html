@@ -273,7 +273,7 @@ textarea:focus{ outline:none; border-color:var(--primary); }
           </div>
         </div>
         <div class="fg"><select id="fOp" onchange="onOpChange()"></select></div>
-        <div class="fg"><select id="fMedia" onchange="render()"></select></div>
+        <div class="fg"><select id="fMedia" onchange="onMediaChange()"></select></div>
         <button class="btn" onclick="resetFilters()">重置</button>
         <button class="btn primary" id="btnImport" onclick="openImport()">＋ 导入数据</button>
       </div>
@@ -540,10 +540,6 @@ function filterRecords() {
   if (state.to) d = d.filter(r => r.日期 <= state.to);
   if (state.op) d = d.filter(r => r.账户操作人 === state.op);
   if (state.media) d = d.filter(r => r.媒体 === state.media);
-  // 与参考看板一致的 10 月特殊口径：钱世豪组剔除彭静、任洁
-  if (state.month === '2026-10') {
-    d = d.filter(r => !(r.盟效运营组 === '钱世豪' && (r.账户操作人 === '彭静' || r.账户操作人 === '任洁')));
-  }
   return d;
 }
 
@@ -747,6 +743,10 @@ function onMonthChange() {
 function onOpChange() {
   state.op = document.getElementById('fOp').value;
   buildSidebar(); render();
+}
+function onMediaChange() {
+  state.media = document.getElementById('fMedia').value;
+  render();
 }
 function resetFilters() {
   state = { group: state.group, month: '', from: '', to: '', op: '', media: '' };
