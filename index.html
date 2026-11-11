@@ -764,6 +764,49 @@ const OCT_ONLY_OPS = ['骆朝杨', '余念情', '高嘉雯'];   // 2026-10 才�
 const TG_EXCLUDE_ALL = ['钱世豪', '刘艳', '彭静'];      // 汇总视图不计入（管理/非运营岗）
 const TG_EXCLUDE = ['钱世豪'];
 
+/* 月中入职 / 离职的目标折算（统一按 30 天口径）
+   - 离职：离职当月目标 = 月目标 × 在职天数 / 30
+   - 入职：前 3 个月目标按正常的一半，入职当月再按剩余天数 / 30 折算
+   例：敖丽 2026-11-06 离职 → 210万 × 6/30 = 42万
+       佘君浩 2026-11-05 入职 → 210万 × 50% × 26/30 = 91万 */
+const LEFT_DATE = { '敖丽': '2026-11-06' };
+const NEW_HIRE_DATE = { '佘君浩': '2026-11-05' };
+const NEW_HIRE_HALF_MONTHS = 3;
+const NEW_HIRE_HALF_RATIO = 0.5;
+
+function monthIdx(ym) { const p = ym.split('-').map(Number); return p[0] * 12 + p[1]; }
+
+function adjustTarget(op, m, tgt) {
+  if (!tgt || !m) return tgt;
+  let out = tgt;
+  const ld = LEFT_DATE[op];
+  if (ld && ld.slice(0, 7) === m) out = out * (+ld.slice(8, 10)) / 30;
+  const nd = NEW_HIRE_DATE[op];
+  if (nd) {
+    const sm = nd.slice(0, 7);
+    if (monthIdx(m) >= monthIdx(sm) && monthIdx(m) < monthIdx(sm) + NEW_HIRE_HALF_MONTHS) {
+      out = out * NEW_HIRE_HALF_RATIO;
+      if (m === sm) out = out * (30 - (+nd.slice(8, 10)) + 1) / 30;
+    }
+  }
+  return out;
+}
+
+/* 全量视图（不选月份）的折算差：把入职/离职当月的目标差额补进累计目标 */
+function allMonthsDelta(op) {
+  if (!LEFT_DATE[op] && !NEW_HIRE_DATE[op]) return 0;
+  const startM = '2026-06';
+  const now = new Date();
+  const curM = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  let delta = 0;
+  for (let mi = monthIdx(startM); mi <= monthIdx(curM); mi++) {
+    const ym = Math.floor(mi / 12) + '-' + String(mi % 12 + 1).padStart(2, '0');
+    const b = tmapFor(ym)[op] || 0;
+    if (b) delta += adjustTarget(op, ym, b) - b;
+  }
+  return delta;
+}
+
 /* 目标口径与参考看板一致：
    - 选了月份：6月及以前用 default、2026-07 用 7 月标准、2026-08 起用 8 月标准
    - 未选月份（全部）：三套标准逐人相加（历史累计目标）
@@ -797,6 +840,8 @@ function renderTargets(d, dates) {
     if (excl.indexOf(op) >= 0) return;
     let tgt = tmap[op] || 0;
     if (OCT_ONLY_OPS.indexOf(op) >= 0 && m && m < '2026-10') tgt = 0;
+    tgt = adjustTarget(op, m, tgt);
+    if (!m) tgt += allMonthsDelta(op);   // 全量视图：补上入离职月份的折算差
     rows.push({ op, total, tgt, rate: tgt > 0 ? total / tgt * 100 : 0 });
   });
   rows.sort((a, b) => b.rate - a.rate || b.total - a.total);
