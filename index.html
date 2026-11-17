@@ -779,9 +779,10 @@ function monthIdx(ym) { const p = ym.split('-').map(Number); return p[0] * 12 + 
 function adjustTarget(op, m, tgt) {
   if (!tgt || !m) return tgt;
   let out = tgt;
+  const nd = NEW_HIRE_DATE[op];
+  if (nd && monthIdx(m) < monthIdx(nd.slice(0, 7))) return 0;   // 入职前不设目标
   const ld = LEFT_DATE[op];
   if (ld && ld.slice(0, 7) === m) out = out * (+ld.slice(8, 10)) / 30;
-  const nd = NEW_HIRE_DATE[op];
   if (nd) {
     const sm = nd.slice(0, 7);
     if (monthIdx(m) >= monthIdx(sm) && monthIdx(m) < monthIdx(sm) + NEW_HIRE_HALF_MONTHS) {
@@ -792,19 +793,19 @@ function adjustTarget(op, m, tgt) {
   return out;
 }
 
-/* 全量视图（不选月份）的折算差：把入职/离职当月的目标差额补进累计目标 */
-function allMonthsDelta(op) {
-  if (!LEFT_DATE[op] && !NEW_HIRE_DATE[op]) return 0;
+/* 全量视图（不选月份）：有入/离职折算的人，按「6月起逐月折算后累加」计算；
+   其他人沿用老口径（三套月标准相加），避免影响原有数字。返回 null 表示走老口径。 */
+function allMonthsTarget(op) {
+  if (!LEFT_DATE[op] && !NEW_HIRE_DATE[op]) return null;
   const startM = '2026-06';
   const now = new Date();
   const curM = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  let delta = 0;
+  let sum = 0;
   for (let mi = monthIdx(startM); mi <= monthIdx(curM); mi++) {
-    const ym = Math.floor(mi / 12) + '-' + String(mi % 12 + 1).padStart(2, '0');
-    const b = tmapFor(ym)[op] || 0;
-    if (b) delta += adjustTarget(op, ym, b) - b;
+    const ym = Math.floor(mi / 12) + '-' + String(mi % 12).padStart(2, '0');
+    sum += adjustTarget(op, ym, tmapFor(ym)[op] || 0);
   }
-  return delta;
+  return sum;
 }
 
 /* 目标口径与参考看板一致：
@@ -840,8 +841,12 @@ function renderTargets(d, dates) {
     if (excl.indexOf(op) >= 0) return;
     let tgt = tmap[op] || 0;
     if (OCT_ONLY_OPS.indexOf(op) >= 0 && m && m < '2026-10') tgt = 0;
-    tgt = adjustTarget(op, m, tgt);
-    if (!m) tgt += allMonthsDelta(op);   // 全量视图：补上入离职月份的折算差
+    if (!m) {
+      const at = allMonthsTarget(op);
+      if (at != null) tgt = at;
+    } else {
+      tgt = adjustTarget(op, m, tgt);
+    }
     rows.push({ op, total, tgt, rate: tgt > 0 ? total / tgt * 100 : 0 });
   });
   rows.sort((a, b) => b.rate - a.rate || b.total - a.total);
