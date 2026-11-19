@@ -902,11 +902,16 @@ function timeProgress() {
   if (state.month) {
     const p = state.month.split('-').map(Number);
     const tmd = new Date(p[0], p[1], 0).getDate();
-    const cur = y + '-' + String(now.getMonth() + 1).padStart(2, '0');
-    if (state.month < cur) pct = 100;
-    else if (state.month === cur) pct = Math.round(now.getDate() / tmd * 100);
-    else pct = 0;
-    label = p[1] + '月1日-' + p[1] + '月' + tmd + '日';
+    /* 日期区间 = 当月1日 ~ 该月最新数据日期；进度 = 最新数据日 / 当月天数 */
+    const days = uniq(DATA.filter(r => r.日期 && r.日期.indexOf(state.month + '-') === 0).map(r => r.日期)).sort();
+    if (days.length) {
+      const last = +days[days.length - 1].split('-')[2];
+      pct = Math.round(last / tmd * 100);
+      label = p[1] + '月1日-' + p[1] + '月' + last + '日';
+    } else {
+      pct = state.month < y + '-' + String(now.getMonth() + 1).padStart(2, '0') ? 100 : 0;
+      label = p[1] + '月1日-' + p[1] + '月' + tmd + '日';
+    }
   } else {
     pct = Math.round(doy / yd * 100);
     const all = uniq(DATA.map(r => r.日期)).sort();
